@@ -1,0 +1,5 @@
+#ignore data stored in data/ folder (but .gitkeep for structure)
+data/*
+
+#large file
+examples/real/Alleluia_Whitacre/alleluia_whitacre.wav
