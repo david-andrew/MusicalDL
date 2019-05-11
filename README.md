@@ -13,7 +13,21 @@
 ...
 
 
+# Getting started
+1. clone this repository:
 
+```
+$ git clone https://github.com/david-andrew/MusicalDL
+```
+
+2. pull the nv-wavenet submodule 
+
+```
+$ git submodule init
+$ git submodule update
+```
+
+3. build the nv-wavenet repo
 
 
 # Notes
