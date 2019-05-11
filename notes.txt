@@ -1,0 +1,9 @@
+Issue with inability to use persistence:
+https://github.com/NVIDIA/nv-wavenet/issues/40
+
+
+Notes for demonstrating proficiency in the project:
+- why you select design choices
+- how you approach solving the problem?
+- why something fails
+- changes you make to fix things that fail
