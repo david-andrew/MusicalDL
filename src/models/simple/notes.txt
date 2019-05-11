@@ -1,0 +1,3 @@
+basic test of the wavenet, using simple waveforms
+waveforms include sine, triangle, square, saw, and noise
+network conditions include pitch, amplitude, and wave-type
