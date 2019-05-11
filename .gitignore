@@ -1,5 +1,8 @@
 #ignore data stored in data/ folder (but .gitkeep for structure)
-data/*
+src/data/*
+
+#ignore pyc files
+*.pyc
 
 #large file
 examples/real/Alleluia_Whitacre/alleluia_whitacre.wav
