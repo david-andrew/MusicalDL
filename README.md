@@ -24,7 +24,7 @@ Train a wavenet on examples of synthesized and real voices, while conditioning o
 $ git clone https://github.com/david-andrew/MusicalDL
 ```
 
-2. pull the nv-wavenet submodule 
+2. pull the nv-wavenet submodule (for more info, see: https://git-scm.com/book/en/v2/Git-Tools-Submodules)
 
 ```
 $ git submodule init
