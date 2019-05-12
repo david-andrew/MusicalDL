@@ -49,10 +49,14 @@ def generate_wave(form, amplitude, pitch, duration, FS):
     # plt.show()
 
 
+def get_bitwave(wave):
+    """convert the wave to 16-bit integer format"""
+    return (wave * 32767).astype(np.int16)
+
+
 def play(wave, FS, wait=True):
     """play the waveform using simpleaudio"""
-    bitwave = wave * 32767   #convert the wave to 16-bit integer format
-    bitwave = bitwave.astype(np.int16)
+    bitwave = get_bitwave(wave)
     player = sa.play_buffer(audio_data=bitwave, num_channels=1, bytes_per_sample=2, sample_rate=FS)
     if wait: player.wait_done()
 
@@ -66,28 +70,28 @@ def generate_random_sequence(form, duration, FS):
     """generate a random wave sequence of notes"""
     samples = 0 #keep track of the current length generated
     total_samples = int(FS * duration)
-    speed = duration / np.random.uniform(low=0.5, high=2*duration)
+    speed = duration / np.random.uniform(low=0.5, high=3*duration)
 
 
-
-    # label = np.zeros(total_samples)
-    #labels is as follows: [sample, frequency, pitch, is_sine, is_square, is_saw, is_triangle]
-    label = np.zeros((3+len(waves), total_samples))
-    label[3+waves.index(form),:] = 1  #set the one-hot for corresponding wavetype to true
+    #wave contains the wave generated, conditions contains the condition data that matches to it
+    #condition label is as follows: [frequency, pitch, is_sine, is_square, is_saw, is_triangle]
+    wave = np.zeros(total_samples)
+    conditions = np.zeros((2+len(waves), total_samples))
+    conditions[2+waves.index(form),:] = 1  #set the one-hot for corresponding wavetype to true
 
     while samples < total_samples:
         frequency = np.random.uniform(low=pitch('C4'), high=pitch('C5')) # max range is A0-C8
         length    = np.random.uniform(low=0.1, high=speed)
         amplitude = np.random.uniform(low=0.0, high=0.5)
         
-        wave = generate_wave(form=form, amplitude=amplitude, pitch=frequency, duration=length, FS=FS)
-        new_samples = min(wave.shape[0], int(total_samples-samples))
-        label[0, samples:samples+new_samples] = wave[0:new_samples]
-        label[1, samples:samples+new_samples] = frequency
-        label[2, samples:samples+new_samples] = amplitude #amplitude is calculated as Mean Absolute Value? 
-        samples += len(wave)
+        wave_excerpt = generate_wave(form=form, amplitude=amplitude, pitch=frequency, duration=length, FS=FS)
+        new_samples = min(wave_excerpt.shape[0], int(total_samples-samples))
+        wave[samples:samples+new_samples] = wave_excerpt[0:new_samples]
+        conditions[0, samples:samples+new_samples] = frequency
+        conditions[1, samples:samples+new_samples] = amplitude #amplitude is calculated as Mean Absolute Value? 
+        samples += len(wave_excerpt)
 
-    return label
+    return wave, conditions
 
 
 if __name__ == '__main__':

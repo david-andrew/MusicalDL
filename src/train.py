@@ -19,7 +19,7 @@ import torch
 
 from torch.utils.data import DataLoader
 from wavenet import WaveNet
-# from mel2samp_onehot import Mel2SampOnehot
+from loader import SimpleWaveLoader
 from utils import to_gpu
 
 class CrossEntropyLoss(torch.nn.Module):
@@ -77,7 +77,9 @@ def train(model_directory, epochs, learning_rate,
    
     criterion = CrossEntropyLoss()
     model = WaveNet(**wavenet_config).cuda()
-    model.upsample = torch.nn.Sequential() #replace the upsample step with no operation as we manually control samples
+    # model.upsample = torch.nn.Sequential() #replace the upsample step with no operation as we manually control samples
+    # model.upsample.weight = None
+    # model.upsample.bias = None
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 
@@ -88,15 +90,8 @@ def train(model_directory, epochs, learning_rate,
         model, optimizer, iteration = load_checkpoint(checkpoint_path, model, optimizer)
         iteration += 1  # next iteration is iteration + 1
 
-    pdb.set_trace()
-    trainset = Mel2SampOnehot(**data_config)
+    trainset = SimpleWaveLoader()
     train_loader = DataLoader(trainset, num_workers=1, shuffle=False, sampler=None, batch_size=batch_size, pin_memory=False, drop_last=True)
-
-    # Get shared output_directory ready
-    if not os.path.isdir(output_directory):
-        os.makedirs(output_directory)
-        os.chmod(output_directory, 0o775)
-    print("output directory", output_directory)
     
     model.train()
     epoch_offset = max(0, int(iteration / len(train_loader)))
@@ -111,10 +106,8 @@ def train(model_directory, epochs, learning_rate,
             x = to_gpu(x).float()
             y = to_gpu(y)
             x = (x, y)  # auto-regressive takes outputs as inputs
-            # pdb.set_trace()
 
             y_pred = model(x)
-            pdb.set_trace()
             loss = criterion(y_pred, y)
             reduced_loss = loss.data.item()
             loss.backward()
@@ -123,8 +116,7 @@ def train(model_directory, epochs, learning_rate,
             print("{}:\t{:.9f}".format(iteration, reduced_loss))
 
             if (iteration % iters_per_checkpoint == 0):
-                checkpoint_path = "{}/checkpoint_{}".format(
-                    output_directory, iteration)
+                checkpoint_path = os.path.join(model_directory, 'checkpoint_%d' % iteration)
                 save_checkpoint(model, optimizer, learning_rate, iteration,
                                 checkpoint_path)
                      
