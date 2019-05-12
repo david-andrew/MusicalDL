@@ -9,7 +9,7 @@ import time
 import pdb
 
 #load the model
-model = torch.load('models/simple/old_checkpoints/checkpoint_10000')['model']
+model = torch.load('models/simple/checkpoint_1572')['model']
 model.eval()
 wavenet = nv_wavenet.NVWaveNet(**(model.export_weights()))
 

@@ -27,8 +27,8 @@ class SimpleWaveLoader(Dataset):
 
     def normalize(self, conditions):
         """return the normalized form of the conditions"""
-        # conditions[0] /= pitch('C9') #set the highest reasonable note to a value of 1.0
-        conditions[0] = (conditions[0] - pitch('C4')) / (pitch('C5') - pitch('C4'))
+        conditions[0] /= pitch('C9') #set the highest reasonable note to a value of 1.0
+        # conditions[0] = (conditions[0] - pitch('C4')) / (pitch('C5') - pitch('C4'))
         return torch.tensor(conditions)
 
     def quantize(self, wave):

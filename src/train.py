@@ -16,6 +16,7 @@ import os
 import sys
 # import time
 import torch
+import re
 
 from torch.utils.data import DataLoader
 from wavenet import WaveNet
@@ -43,7 +44,7 @@ class CrossEntropyLoss(torch.nn.Module):
 
 def find_checkpoint(model_directory):
     """return the path to the newest checkpoint, or None if no checkpoints found"""
-    checkpoints = [int(file[len('checkpoint_'):]) for file in os.listdir(model_directory) if 'checkpoint' in file]
+    checkpoints = [int(file[len('checkpoint_'):]) for file in os.listdir(model_directory) if re.match(r'checkpoint_[0-9]+', file) is not None]
     if len(checkpoints) > 0:
         return os.path.join(model_directory, 'checkpoint_' + str(max(checkpoints)))
     else:
@@ -54,8 +55,10 @@ def load_checkpoint(checkpoint_path, model, optimizer):
     checkpoint_dict = torch.load(checkpoint_path, map_location='cpu')
     iteration = checkpoint_dict['iteration']
     optimizer.load_state_dict(checkpoint_dict['optimizer'])
-    model_for_loading = checkpoint_dict['model']
-    model.load_state_dict(model_for_loading.state_dict())
+    # model_for_loading = checkpoint_dict['model']
+    # model.load_state_dict(model_for_loading.state_dict())
+    model = torch.load(checkpoint_path)['model'].cuda()
+
     print("Loaded checkpoint '{}' (iteration {})" .format(
           checkpoint_path, iteration))
     return model, optimizer, iteration
@@ -118,7 +121,7 @@ def train(model_directory, epochs, learning_rate,
             iteration += 1
             torch.cuda.empty_cache()
 
-        if (epoch % epochs_per_checkpoint == 0):
+        if (epoch != 0 and epoch % epochs_per_checkpoint == 0):
             checkpoint_path = os.path.join(model_directory, 'checkpoint_%d' % iteration)
             save_checkpoint(model, optimizer, learning_rate, iteration,
                             checkpoint_path)
