@@ -71,7 +71,7 @@ def save_checkpoint(model, optimizer, learning_rate, iteration, filepath):
                 'learning_rate': learning_rate}, filepath)
 
 def train(model_directory, epochs, learning_rate,
-          iters_per_checkpoint, batch_size, seed):
+          epochs_per_checkpoint, batch_size, seed):
     torch.manual_seed(seed)
     torch.cuda.manual_seed(seed)
    
@@ -115,13 +115,15 @@ def train(model_directory, epochs, learning_rate,
 
             print("{}:\t{:.9f}".format(iteration, reduced_loss))
 
-            if (iteration % iters_per_checkpoint == 0):
-                checkpoint_path = os.path.join(model_directory, 'checkpoint_%d' % iteration)
-                save_checkpoint(model, optimizer, learning_rate, iteration,
-                                checkpoint_path)
-                     
             iteration += 1
             torch.cuda.empty_cache()
+
+        if (epoch % epochs_per_checkpoint == 0):
+            checkpoint_path = os.path.join(model_directory, 'checkpoint_%d' % iteration)
+            save_checkpoint(model, optimizer, learning_rate, iteration,
+                            checkpoint_path)
+                 
+            
 
 if __name__ == "__main__":
     model_directory = sys.argv[1]

@@ -81,6 +81,7 @@ def generate_random_sequence(form, duration, FS):
 
     while samples < total_samples:
         frequency = np.random.uniform(low=pitch('C4'), high=pitch('C5')) # max range is A0-C8
+        #length = duration
         length    = np.random.uniform(low=0.1, high=speed)
         amplitude = np.random.uniform(low=0.0, high=0.5)
         

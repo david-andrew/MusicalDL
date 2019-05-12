@@ -1,4 +1,3 @@
 [submodule "src/nv_wavenet"]
 	path = src/nv_wavenet
 	url = https://github.com/NVIDIA/nv-wavenet
-	ignore = all

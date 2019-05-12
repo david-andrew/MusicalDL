@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 from torch.utils.data import Dataset
-from pure_waves import generate_random_sequence, play, pitch, waves
+from pure_waves import * #generate_random_sequence, play, pitch, waves, get_bitwave
 from utils import mu_law_encode
 
 class SimpleWaveLoader(Dataset):
@@ -21,18 +21,25 @@ class SimpleWaveLoader(Dataset):
 
         form = waves[np.random.randint(low=0, high=len(waves))]
         wave, conditions = generate_random_sequence(form=form, duration=self.duration, FS=self.FS)
-        wave = self.discretize(wave)
+        wave = self.quantize(wave)
         conditions = self.normalize(conditions)
         return conditions, wave
 
     def normalize(self, conditions):
         """return the normalized form of the conditions"""
-        conditions[0] /= pitch('C9') #set the highest reasonable note to a value of 1.0
+        # conditions[0] /= pitch('C9') #set the highest reasonable note to a value of 1.0
+        conditions[0] = (conditions[0] - pitch('C4')) / (pitch('C5') - pitch('C4'))
         return torch.tensor(conditions)
 
-    def discretize(self, wave):
+    def quantize(self, wave):
         """convert the wave to a discrete integer format"""
         return mu_law_encode(torch.tensor(wave), self.mu_quantization)
+
+    def decode(self, inference):
+        """convert the network inference into a sound file"""
+        #mu_law decode
+        #convert to wave file?
+        pass
 
 
 if __name__ == '__main__':
