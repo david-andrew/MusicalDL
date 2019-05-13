@@ -11,48 +11,34 @@ import pdb
 #load the model
 model = torch.load('models/simple/checkpoint_6972')['model']
 # model.eval()
-wavenet = nv_wavenet.NVWaveNet(**(model.export_weights()))
+# wavenet = nv_wavenet.NVWaveNet(**(model.export_weights()))
 
 #create some test data to generate
 testset = SimpleWaveLoader()
-test_loader = DataLoader(testset, num_workers=1, shuffle=False, sampler=None, batch_size=1, pin_memory=False, drop_last=True)
+test_loader = DataLoader(testset, num_workers=1, shuffle=False, sampler=None, batch_size=8, pin_memory=False, drop_last=True)
 
 
 for batch in test_loader:
     # conditions, true_audio = testset[0]#batch
 
     x, y = batch
-    true_audio = y[0].clone()
-    conditions = x[0].clone()
-    
+    true_audio = y.clone()
+
+    y = torch.zeros_like(y) #removing the waveform for pure inference
     x = utils.to_gpu(x).float()
-    x = torch.zeros_like(x) #test removing the waveform for inference
     y = utils.to_gpu(y)
     x = (x, y)  # auto-regressive takes outputs as inputs
     y_pred = model(x)
     single = y_pred[0].detach().cpu()
     values, indices = single.max(0)
-    indices = utils.mu_law_decode_numpy(indices.numpy(), wavenet.A)
+    indices = utils.mu_law_decode_numpy(indices.numpy(), 256)
     indices = utils.MAX_WAV_VALUE * indices
     indices = indices.astype('int16')
 
-    true_audio = utils.mu_law_decode_numpy(true_audio.cpu().numpy(), wavenet.A)
+    true_audio = utils.mu_law_decode_numpy(true_audio[0].cpu().numpy(), 256)
     true_audio = utils.MAX_WAV_VALUE * true_audio
     true_audio = true_audio.astype('int16')
 
-    #####NOT WORKING PROPERLY. TO DO INFERENCE, USE PYTORCH IMPLEMENTATION, AND SET INPUT WAVEFORMM TO ALL ZEROS#####
-    # conditions = utils.to_gpu(conditions.float())
-    # conditions = torch.unsqueeze(conditions, 0)
-    # cond_input = model.get_cond_input(conditions)
-
-    # inference_audio = wavenet.infer(cond_input, nv_wavenet.Impl.AUTO)
-    # inference_audio = utils.mu_law_decode_numpy(inference_audio[0,:].cpu().numpy())
-    # inference_audio = utils.MAX_WAV_VALUE * inference_audio
-    # inference_audio = inference_audio.astype('int16')
-
-    # pdb.set_trace()
-    # play(inference_audio, 16000)
-    # time.sleep(0.25)
     play(indices, 16000)
     time.sleep(0.25)
     play(true_audio, 16000)
