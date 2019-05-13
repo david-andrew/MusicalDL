@@ -1,11 +1,10 @@
 import __init__
-import os
-import re
 import numpy as np
 import torch
 from torch.utils.data import Dataset
 from pure_waves import * #generate_random_sequence, play, pitch, waves, get_bitwave
 from utils import mu_law_encode
+
 
 class SimpleWaveLoader(Dataset):
     """Dataloader for simple waves"""
@@ -43,30 +42,3 @@ class SimpleWaveLoader(Dataset):
         #mu_law decode
         #convert to wave file?
         pass
-
-
-
-class VocalSetLoader(Dataset):
-    """"""
-    def __init__(self, length=100, duration=1, FS=16000, mu_quantization=256, path=os.path.join('.', 'data', 'VocalSet')):
-        self.length = length # "number" of examples. technically doesn't mean much because each example is random anyways
-        self.duration = duration
-        self.FS = FS
-        self.mu_quantization = mu_quantization
-        self.path = path
-
-    def __len__(self):
-        return self.length
-
-    def construct_examples(self):
-        """construct 1-seconds examples and save to the disk for easy loading"""
-        save_path = os.path.join(self.path, 'train')
-        voices = [voice for voice in os.listdir(self.path) if re.match(r'(fe)?male[0-9]+', voice) is not None]
-        pdb.set_trace()
-
-
-
-
-if __name__ == '__main__':
-    v = VocalSetLoader()
-    v.construct_examples()
