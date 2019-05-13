@@ -116,7 +116,10 @@ def train(model_directory, epochs, learning_rate,
             loss.backward()
             optimizer.step()
 
+            #print out the loss, and save to a file
             print("{}:\t{:.9f}".format(iteration, reduced_loss))
+            with open(os.path.join(model_directory, 'loss_history.txt'), 'a') as f:
+                f.write('%s\n' % str(reduced_loss))
 
             iteration += 1
             torch.cuda.empty_cache()

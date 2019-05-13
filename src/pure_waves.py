@@ -8,6 +8,7 @@ import pdb
 
 
 square   = np.vectorize(lambda x: 1.0 if x < np.pi else -1.0)
+square2   = np.vectorize(lambda x: 1.0 if x < np.pi/2 else -1.0)
 saw      = np.vectorize(lambda x: x/np.pi - (0 if x < np.pi else 2))
 triangle = np.vectorize(lambda x: (2*x/np.pi - (0 if x < np.pi/2 else 4)) if x < np.pi/2 or x > 3*np.pi/2 else 2-2*x/np.pi)
 # noise    = np.vectorize(lambda x: np.clip(np.random.normal(loc=0.0, scale=0.1), -1.0, 1.0))
@@ -19,6 +20,7 @@ wave_funcs = {
     'square'    : square, 
     'saw'       : saw, 
     'triangle'  : triangle,
+    'square2'   : square2,
 }
 
 def generate_wave(form, amplitude, pitch, duration, FS):

@@ -9,8 +9,8 @@ import time
 import pdb
 
 #load the model
-model = torch.load('models/simple/checkpoint_1572')['model']
-model.eval()
+model = torch.load('models/simple/checkpoint_132')['model']
+# model.eval()
 wavenet = nv_wavenet.NVWaveNet(**(model.export_weights()))
 
 #create some test data to generate
@@ -23,7 +23,7 @@ for batch in test_loader:
 
     x, y = batch
     true_audio = y[0].clone()
-    # conditions = x[0].clone()
+    conditions = x[0].clone()
     
     x = utils.to_gpu(x).float()
     y = utils.to_gpu(y)
@@ -40,18 +40,18 @@ for batch in test_loader:
     true_audio = utils.MAX_WAV_VALUE * true_audio
     true_audio = true_audio.astype('int16')
 
-    # conditions = utils.to_gpu(conditions.float())
-    # conditions = torch.unsqueeze(conditions, 0)
-    # cond_input = model.get_cond_input(conditions)
+    conditions = utils.to_gpu(conditions.float())
+    conditions = torch.unsqueeze(conditions, 0)
+    cond_input = model.get_cond_input(conditions)
 
-    # inference_audio = wavenet.infer(cond_input, nv_wavenet.Impl.AUTO)
-    # inference_audio = utils.mu_law_decode_numpy(inference_audio[0,:].cpu().numpy())
-    # inference_audio = utils.MAX_WAV_VALUE * inference_audio
-    # inference_audio = inference_audio.astype('int16')
+    inference_audio = wavenet.infer(cond_input, nv_wavenet.Impl.AUTO)
+    inference_audio = utils.mu_law_decode_numpy(inference_audio[0,:].cpu().numpy())
+    inference_audio = utils.MAX_WAV_VALUE * inference_audio
+    inference_audio = inference_audio.astype('int16')
 
     # pdb.set_trace()
-    # play(inference_audio, 16000)
-    # time.sleep(0.25)
+    play(inference_audio, 16000)
+    time.sleep(0.25)
     play(indices, 16000)
     time.sleep(0.25)
     play(true_audio, 16000)
