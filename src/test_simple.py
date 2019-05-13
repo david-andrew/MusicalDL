@@ -9,7 +9,7 @@ import time
 import pdb
 
 #load the model
-model = torch.load('models/simple/checkpoint_132')['model']
+model = torch.load('models/simple/checkpoint_6972')['model']
 # model.eval()
 wavenet = nv_wavenet.NVWaveNet(**(model.export_weights()))
 
@@ -26,9 +26,9 @@ for batch in test_loader:
     conditions = x[0].clone()
     
     x = utils.to_gpu(x).float()
+    x = torch.zeros_like(x) #test removing the waveform for inference
     y = utils.to_gpu(y)
     x = (x, y)  # auto-regressive takes outputs as inputs
-
     y_pred = model(x)
     single = y_pred[0].detach().cpu()
     values, indices = single.max(0)
@@ -40,18 +40,19 @@ for batch in test_loader:
     true_audio = utils.MAX_WAV_VALUE * true_audio
     true_audio = true_audio.astype('int16')
 
-    conditions = utils.to_gpu(conditions.float())
-    conditions = torch.unsqueeze(conditions, 0)
-    cond_input = model.get_cond_input(conditions)
+    #####NOT WORKING PROPERLY. TO DO INFERENCE, USE PYTORCH IMPLEMENTATION, AND SET INPUT WAVEFORMM TO ALL ZEROS#####
+    # conditions = utils.to_gpu(conditions.float())
+    # conditions = torch.unsqueeze(conditions, 0)
+    # cond_input = model.get_cond_input(conditions)
 
-    inference_audio = wavenet.infer(cond_input, nv_wavenet.Impl.AUTO)
-    inference_audio = utils.mu_law_decode_numpy(inference_audio[0,:].cpu().numpy())
-    inference_audio = utils.MAX_WAV_VALUE * inference_audio
-    inference_audio = inference_audio.astype('int16')
+    # inference_audio = wavenet.infer(cond_input, nv_wavenet.Impl.AUTO)
+    # inference_audio = utils.mu_law_decode_numpy(inference_audio[0,:].cpu().numpy())
+    # inference_audio = utils.MAX_WAV_VALUE * inference_audio
+    # inference_audio = inference_audio.astype('int16')
 
     # pdb.set_trace()
-    play(inference_audio, 16000)
-    time.sleep(0.25)
+    # play(inference_audio, 16000)
+    # time.sleep(0.25)
     play(indices, 16000)
     time.sleep(0.25)
     play(true_audio, 16000)
