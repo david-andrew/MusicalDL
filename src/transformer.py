@@ -11,6 +11,7 @@ from torch.utils.data import DataLoader
 import matplotlib.pyplot as plt
 from pure_waves import pitch as note_to_freq
 import os
+import re
 
 import pdb
 
@@ -108,11 +109,17 @@ class reformer(nn.Module):
 
 
 def generate_features():
-    pitch = np.linspace(note_to_freq('C4'), note_to_freq('C5'), 80) / note_to_freq('C8')
+    pitch = np.concatenate([
+        np.ones(20) * note_to_freq('C4') / note_to_freq('C8'),
+        np.linspace(note_to_freq('C4'), note_to_freq('C5'), 80) / note_to_freq('C8'),
+        np.ones(80) * note_to_freq('C5') / note_to_freq('C8'),
+        np.linspace(note_to_freq('C5'), note_to_freq('C4'), 80) / note_to_freq('C8'),
+        np.ones(20) * note_to_freq('C4') / note_to_freq('C8')
+    ])
     volume = np.random.uniform(0.001, 0.5)
     singer = np.random.randint(20)
     vowel = np.random.randint(5)
-    x = np.zeros((27, 80), dtype=np.float32)
+    x = np.zeros((27, pitch.shape[0]), dtype=np.float32)
     x[0] = pitch
     x[1] = volume
     x[2 + singer] = 1
@@ -121,25 +128,63 @@ def generate_features():
 
     return x
 
-def train():
+
+def get_newest_idx(model_directory):
+    epochs = [int(filename[len('model_'):]) for filename in os.listdir(model_directory) if re.match(r'model_[0-9]+', filename) is not None]
+    return max(epochs)
+
+def load_model(model_directory, load_idx, model, optimizer=None):
+    model.load_state_dict(torch.load(os.path.join(model_directory, 'model_%d' % load_idx)))
+    if optimizer is not None:
+        optimizer.load_state_dict(torch.load(os.path.join(model_directory, 'optim_%d' % load_idx)))
+    
+    with open(os.path.join(model_directory, 'checkpoint.txt'), 'r') as f:
+        nums = [int(line) for line in f]
+        start_epoch = nums[0]
+        i = nums[1]
+    
+    print('Loaded model at epoch %d and iteration %d' % (start_epoch, i))
+    return model, optimizer, start_epoch, i
+
+def save_model(model_directory, epoch, i, model, optimizer, loss_history):
+    #save model/optimizer
+    print('Saving model at epoch %d and iteration %d' % (epoch, i))
+    
+    torch.save(model.state_dict(), os.path.join(model_directory, ('model_%d' % epoch)))
+    torch.save(optimizer.state_dict(), os.path.join(model_directory, ('optim_%d' % epoch)))
+    
+    with open(os.path.join(model_directory, 'checkpoint.txt'), 'w') as f:
+        f.write('%s\n' % str(epoch))
+        f.write(str(i))
+    
+    with open(os.path.join(model_directory, 'loss_history.txt'), 'a') as f:
+        for loss in loss_history:
+            f.write('%s\n' % str(loss))
+
+
+def train(model_directory, load_idx=None):
     #simple training process
-    model_directory = os.path.join('.', 'models', 'vocal_transformer')
 
     model = reformer() #transformer(batch_norm=True)
-    loader = VocalSetLoader(duration=1)
-    train_loader = DataLoader(loader, num_workers=1, shuffle=True, batch_size=200)
-
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
-    model.train()
+    start_epoch = 0
     i = 0 #current iteration
-    for epoch in range(1000):
+
+    if load_idx is not None:
+        model, optimizer, start_epoch, i = load_model(model_directory, load_idx, model, optimizer)
+
+    model.train()
+    
+    loader = VocalSetLoader(duration=1)
+    train_loader = DataLoader(loader, num_workers=1, shuffle=True, batch_size=2000)
+    loss_history = []
+
+    for epoch in range(start_epoch, 10000000):
 
         print('Epoch %d -------------------------' % epoch)
-        if epoch % 10 == 0:
-            #save model/optimizer
-            print('Saving model at epoch %d' % epoch)
-            torch.save(model.state_dict(), os.path.join(model_directory, ('model_%d' % epoch)))
-            torch.save(optimizer.state_dict(), os.path.join(model_directory, ('optim_%d' % epoch)))
+        if epoch != start_epoch and epoch % 10 == 0:
+            save_model(model_directory, epoch, i, model, optimizer, loss_history)
+            loss_history.clear()
 
         for batch in train_loader:
             model.zero_grad()
@@ -151,19 +196,16 @@ def train():
             optimizer.step()
 
             print('%d:  %f' % (i, loss.data.item()))
-            with open(os.path.join(model_directory, 'loss_history.txt'), 'a') as f:
-                f.write('%s\n' % str(loss.data.item()))
+            loss_history.append(loss.data.item())
 
             i += 1 #increment iteration number
 
 
-def infer():
+def infer(model_directory, load_idx):
     #simple inference to check results
-    model_directory = os.path.join('.', 'models', 'vocal_transformer')
 
-
-    model = transformer(batch_norm=True)
-    model.load_state_dict(torch.load(os.path.join(model_directory, 'model_430')))
+    model = reformer()#transformer(batch_norm=True)
+    model.load_state_dict(torch.load(os.path.join(model_directory, 'model_%d' % load_idx)))
     model.eval()
 
     loader = VocalSetLoader(duration=1)
@@ -179,17 +221,18 @@ def infer():
         plt.show()
 
 
-def synthesize():
+def synthesize(model_directory, load_idx):
     #create spectrograms from scratch
-    model_directory = os.path.join('.', 'models', 'vocal_transformer', '6_layer_with_batch_norm')
-    model = transformer(batch_norm=True)
-    model.load_state_dict(torch.load(os.path.join(model_directory, 'model_430')))
+    model = reformer()#transformer(batch_norm=True)
+    model.load_state_dict(torch.load(os.path.join(model_directory, 'model_%d' % load_idx)))
     model.eval()
 
     for i in range(10):
         x = generate_features()
         y_hat = model(x).detach()
 
+        plt.imshow(y_hat[0])
+        plt.show()
         torch.save(y_hat[0], os.path.join(model_directory, 'spec_%d.pt' % i))
 
 
@@ -197,6 +240,10 @@ def synthesize():
 
 
 if __name__ == '__main__':
-    train()
-    #infer()
-    #synthesize()
+    model_directory = os.path.join('.', 'models', 'vocal_transformer')
+    # model_directory = os.path.join('.', 'models', 'vocal_transformer', '6_layer_with_batch_norm')
+
+    load_idx = get_newest_idx(model_directory)
+    train(model_directory, load_idx)
+    #infer(model_directory, load_idx)
+    #synthesize(model_directory, load_idx)

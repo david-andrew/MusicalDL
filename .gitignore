@@ -1,8 +1,10 @@
 #ignore data stored in data/ folder (but .gitkeep for structure)
 src/data/*
 
-#ignore model checkpoints
+#ignore models checkpoints
 checkpoint_*
+model_*
+optim_*
 
 #ignore pyc files
 *.pyc
