@@ -18,10 +18,11 @@ import pdb
 
 class VocalSetLoader(Dataset):
     """"""
-    def __init__(self, path=os.path.join('.', 'data', 'VocalSet'), length=100, duration=1, FS=16000, mu_quantization=256):
-        self.length = length # "number" of examples. technically doesn't mean much because each example is random anyways
+    def __init__(self, path=os.path.join('.', 'data', 'VocalSet'), duration=1, FS=16000, mu_quantization=256):
+        # self.length = length # "number" of examples. technically doesn't mean much because each example is random anyways
         self.duration = duration
         self.FS = FS
+        self.SS = 80 #spectrogram sample rate
         self.mu_quantization = mu_quantization
         self.path = os.path.join(path, 'FULL')
         self.save_path = os.path.join(path, 'training_clips')
@@ -37,8 +38,49 @@ class VocalSetLoader(Dataset):
         self.hop = None
         self.voice_vowel_combos = []
 
+        self.update_training_list()
+
+
     def __len__(self):
-        return self.length
+        return len(self.wave_files)
+
+    def __getitem__(self, idx):
+        """return a 1 second clip from the selected item"""
+        filename = self.wave_files[idx]
+        feature = torch.load(os.path.join(self.save_path, filename + '.feat'))
+        spectrogram = torch.load(os.path.join(self.save_path, filename + '.spec'))
+
+
+        start, stop = self.get_feature_clip_idx(feature)
+        return feature[:, start:stop].float(), spectrogram[:, start:stop]
+
+    def get_feature_clip_idx(self, feature):
+        """return a 1 second interval from the clip"""
+        # nonzero = feature[0].nonzero()
+        # minimum = nonzero[0]  #get the first non-zero element
+        # maximum = nonzero[-1] #get the last non-zero element
+        minimum = 0
+        maximum = feature.shape[1] - 1
+
+        window = int(self.duration * self.SS)
+        assert(maximum - minimum >= window)  # self.SS=80 is 1 second length of spectrogram
+        offset = np.random.randint(maximum - minimum - self.duration * self.SS)
+        start = minimum + offset
+        stop = start + window
+        return start, stop
+
+    def update_training_list(self):
+        self.wave_files = []
+        self.feature_files = []
+        self.spectrogram_files = []
+
+        for root, _, files in os.walk(self.save_path):
+            for filename in files:
+                if os.path.splitext(filename)[1] == '.feat':
+                    filename = os.path.splitext(filename)[0]
+                    self.wave_files.append(filename)
+                    self.feature_files.append(filename + '.feat')
+                    self.spectrogram_files.append(filename + '.spec')
 
     def freq_to_midi(self, freq):
         """convert a frequency to it's nearest midi-number"""
@@ -243,6 +285,7 @@ class VocalSetLoader(Dataset):
                         
                     try:
                         features, spectrogram = self.get_wave_features(wave, filename) #if None, this will cause an exception
+                        pdb.set_trace()
                         torch.save(features, os.path.join(self.save_path, filename + '.feat'))
                         torch.save(spectrogram, os.path.join(self.save_path, filename + '.spec'))
                         print('Saving %s features data' % filename)
@@ -253,7 +296,7 @@ class VocalSetLoader(Dataset):
 
     def get_wave_features(self, wave, filename):
         #load raw spectrogram and get it's shape
-        spectrogram = torch.load(os.path.join(self.save_path, filename + '.pt')).numpy()
+        spectrogram = torch.load(os.path.join(self.save_path, filename + '.pt')).numpy().astype(np.float64)
         out_length = spectrogram.shape[1]
 
         #get raw features
@@ -294,5 +337,6 @@ class VocalSetLoader(Dataset):
 
 if __name__ == '__main__':
     v = VocalSetLoader()
+    feature, spectrogram = v[0]
     # v.construct_gansynth_examples()
-    v.construct_wavenet_examples()
+    # v.construct_wavenet_examples()
