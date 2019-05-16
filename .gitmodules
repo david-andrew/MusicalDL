@@ -1,3 +1,6 @@
 [submodule "src/nv_wavenet"]
 	path = src/nv_wavenet
 	url = https://github.com/NVIDIA/nv-wavenet
+[submodule "src/Ensemble"]
+	path = src/Ensemble
+	url = git@github.com:david-andrew/Ensemble.git

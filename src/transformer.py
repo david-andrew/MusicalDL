@@ -162,8 +162,9 @@ def save_model(model_directory, epoch, i, model, optimizer, loss_history):
             f.write('%s\n' % str(loss))
 
 
-def train(model_directory, load_idx=None):
+def train(model_directory):
     #simple training process
+    load_idx = get_newest_idx(model_directory)
 
     model = reformer() #transformer(batch_norm=True)
     optimizer = torch.optim.Adam(model.parameters(), lr=1e-3)
@@ -201,9 +202,9 @@ def train(model_directory, load_idx=None):
             i += 1 #increment iteration number
 
 
-def infer(model_directory, load_idx):
+def infer(model_directory):
     #simple inference to check results
-
+    load_idx = get_newest_idx(model_directory)
     model = reformer()#transformer(batch_norm=True)
     model.load_state_dict(torch.load(os.path.join(model_directory, 'model_%d' % load_idx)))
     model.eval()
@@ -221,12 +222,14 @@ def infer(model_directory, load_idx):
         plt.show()
 
 
-def synthesize(model_directory, load_idx):
+def synthesize(model_directory):
     #create spectrograms from scratch
+    load_idx = get_newest_idx(model_directory)
     model = reformer()#transformer(batch_norm=True)
     model.load_state_dict(torch.load(os.path.join(model_directory, 'model_%d' % load_idx)))
     model.eval()
 
+    #generate 10 random examples
     for i in range(10):
         x = generate_features()
         y_hat = model(x).detach()
@@ -239,11 +242,14 @@ def synthesize(model_directory, load_idx):
 
 
 
+
+
+
 if __name__ == '__main__':
     model_directory = os.path.join('.', 'models', 'vocal_transformer')
     # model_directory = os.path.join('.', 'models', 'vocal_transformer', '6_layer_with_batch_norm')
 
-    load_idx = get_newest_idx(model_directory)
+    
     train(model_directory, load_idx)
     #infer(model_directory, load_idx)
     #synthesize(model_directory, load_idx)

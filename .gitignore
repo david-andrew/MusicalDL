@@ -5,6 +5,8 @@ src/data/*
 checkpoint_*
 model_*
 optim_*
+wavenet_*
+artcic_11000
 
 #ignore pyc files
 *.pyc
