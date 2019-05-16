@@ -4,3 +4,6 @@
 [submodule "src/Ensemble"]
 	path = src/Ensemble
 	url = git@github.com:david-andrew/Ensemble.git
+[submodule "src/REAPER"]
+	path = src/REAPER
+	url = git@github.com:google/REAPER.git

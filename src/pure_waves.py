@@ -56,7 +56,7 @@ def get_bitwave(wave):
     return (wave * 32767).astype(np.int16)
 
 
-def play(wave, FS, wait=True):
+def play(wave, FS=16000, wait=True):
     """play the waveform using simpleaudio"""
     bitwave = get_bitwave(wave)
     player = sa.play_buffer(audio_data=bitwave, num_channels=1, bytes_per_sample=2, sample_rate=FS)
