@@ -1,7 +1,14 @@
 # MusicalDL
 EN.601.682 Machine Learning: Deep Learning final project by William David, Sophia Doerr, David Samson. 
 
+## Results and Examples
+Network audio results can be found in `./src/output`. The best example is `./src/output/tuned/Danny_Boy.wav`. Poster for poster session can be found at `./misc/presentation/MusicalDL Poster Session Poster.pdf`.
 
+`./src/output/untuned` is the raw network output. Currently the network has very poor pitch comprehension, so all of these examples are grossly out of tune
+
+`./src/output/tuned` is the raw network output with an autotuner applied to correct the pitch. The autotuner was very rough, and so most of the examples don't sound very good. Best sounding example is Danny Boy.
+
+Examples of spectrograms for the transformer step can be found in `./src/models/vocal_transformer`
 
 
 ## Goal

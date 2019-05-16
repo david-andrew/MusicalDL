@@ -13,3 +13,7 @@ artcic_11000
 
 #large file
 examples/real/Alleluia_Whitacre/alleluia_whitacre.wav
+
+
+#temporary directory
+src/output/tmp/*
